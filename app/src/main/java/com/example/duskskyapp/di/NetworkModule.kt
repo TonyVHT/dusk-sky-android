@@ -18,11 +18,11 @@ object NetworkModule {
 
     @Provides @Singleton
     @Named("AUTH_BASE_URL")
-    fun provideAuthBaseUrl(): String = "http://10.0.2.2:8001/"
+    fun provideAuthBaseUrl(): String = "http://192.168.1.113:8001/"
 
     @Provides @Singleton
     @Named("GAME_BASE_URL")
-    fun provideGameBaseUrl(): String = "http://10.0.2.2:8004/"
+    fun provideGameBaseUrl(): String = "http://192.168.1.113:8004/"
 
     @Provides @Singleton
     fun provideOkHttpClient(): OkHttpClient =

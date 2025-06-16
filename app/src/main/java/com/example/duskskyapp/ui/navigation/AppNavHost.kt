@@ -1,13 +1,18 @@
 package com.example.duskskyapp.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.duskskyapp.ui.auth.LoginScreen
 import com.example.duskskyapp.ui.auth.RegisterScreen
+import com.example.duskskyapp.ui.home.GameDetailScreen
 import com.example.duskskyapp.ui.home.HomeScreen
+import com.example.duskskyapp.ui.home.HomeViewModel
 import com.example.duskskyapp.ui.welcome.WelcomeScreen
 
 @Composable
@@ -68,14 +73,38 @@ fun AppNavHost(
             )
         }
 
-        // Ruta de Home (pantalla principal)
         composable("home") {
+            val homeViewModel: HomeViewModel = hiltViewModel()
+            val popularGames by homeViewModel.popularGames.collectAsState(emptyList())
+
             HomeScreen(
-                onLogout = {
+                popularGames = popularGames,
+                onGameClick  = { gameId ->
+                    navController.navigate("game/$gameId")
+                },
+                onLogout     = {
                     navController.navigate("login") {
                         popUpTo("home") { inclusive = true }
                     }
+                },
+                onOpenDrawer = {
+                    // TODO: abrir tu drawer
+                },
+                onSearch     = {
+                    // TODO: navegar a búsqueda
+                },
+                onFabClick   = {
+                    // TODO: flujo “agregar juego”
                 }
+            )
+        }
+
+        // Nueva ruta para detalle de juego
+        composable("game/{gameId}") { backStackEntry ->
+            val gameId = backStackEntry.arguments!!.getString("gameId")!!
+            GameDetailScreen(
+                gameId = gameId,
+                onBack = { navController.popBackStack() }
             )
         }
     }

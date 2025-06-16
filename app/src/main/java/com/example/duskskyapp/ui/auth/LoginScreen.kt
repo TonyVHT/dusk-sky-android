@@ -17,15 +17,13 @@ fun LoginScreen(
     viewModel: AuthViewModel = hiltViewModel(),
     onLoginSuccess: () -> Unit,
     onNavigateToRegister: () -> Unit,
-    onBack: () -> Unit               // ← Nuevo callback
+    onBack: () -> Unit               // ← callback para “volver”
 ) {
     val state by viewModel.uiState.collectAsState()
 
     // Cuando isLoggedIn pase a true, navegamos hacia Home
     if (state.isLoggedIn) {
-        LaunchedEffect(Unit) {
-            onLoginSuccess()
-        }
+        LaunchedEffect(Unit) { onLoginSuccess() }
     }
 
     Scaffold(
@@ -34,10 +32,7 @@ fun LoginScreen(
                 title = { Text("Iniciar sesión") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.Filled.ArrowBack,
-                            contentDescription = "Volver"
-                        )
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Volver")
                     }
                 }
             )
@@ -51,24 +46,27 @@ fun LoginScreen(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(text = "Dusk Sky", style = MaterialTheme.typography.headlineMedium)
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(Modifier.height(24.dp))
 
+                // ← Aquí usamos username en lugar de email
                 OutlinedTextField(
-                    value = state.email,
-                    onValueChange = { viewModel.onEmailChanged(it) },
-                    label = { Text("Correo electrónico") },
+                    value = state.username,
+                    onValueChange = { viewModel.onUsernameChanged(it) },
+                    label = { Text("Nombre de usuario") },
+                    singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(Modifier.height(12.dp))
 
                 OutlinedTextField(
                     value = state.password,
                     onValueChange = { viewModel.onPasswordChanged(it) },
                     label = { Text("Contraseña") },
-                    modifier = Modifier.fillMaxWidth(),
-                    visualTransformation = PasswordVisualTransformation()
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth()
                 )
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(Modifier.height(24.dp))
 
                 Button(
                     onClick = { viewModel.login() },
@@ -89,11 +87,11 @@ fun LoginScreen(
                 }
 
                 state.errorMessage?.let {
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(Modifier.height(12.dp))
                     Text(text = it, color = MaterialTheme.colorScheme.error)
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(Modifier.height(16.dp))
                 TextButton(onClick = onNavigateToRegister) {
                     Text("¿No tienes cuenta? Regístrate")
                 }

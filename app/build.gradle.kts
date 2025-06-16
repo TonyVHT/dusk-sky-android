@@ -57,6 +57,10 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom.v20240401))
     implementation(libs.androidx.material.icons.extended)
 
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.coil.compose)
+
 
     // Hilt
     implementation(libs.hilt.android)
