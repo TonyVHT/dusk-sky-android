@@ -6,5 +6,5 @@ import com.example.duskskyapp.data.model.GameDetailUI
 /** Contrato común para repositorios de juegos */
 interface GameRepository {
     suspend fun fetchPopular(): List<GameUI>
-    suspend fun fetchGameDetail(gameId: String): GameDetailUI  // ← nuevo método
+    suspend fun fetchGameDetail(gameId: String): GameDetailUI
 }

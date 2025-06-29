@@ -4,8 +4,11 @@ import com.example.duskskyapp.data.remote.dto.LoginRequestDto
 import com.example.duskskyapp.data.remote.dto.LoginResponseDto
 import com.example.duskskyapp.data.remote.dto.RegisterRequestDto
 import com.example.duskskyapp.data.remote.dto.RegisterResponseDto
+import com.example.duskskyapp.data.remote.dto.UserDto
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Path
 
 interface AuthApi {
     @POST("auth/register/")
@@ -13,4 +16,7 @@ interface AuthApi {
 
     @POST("auth/login/")
     suspend fun login(@Body req: LoginRequestDto): LoginResponseDto
+
+    @GET("auth/users/{id}")
+    suspend fun getUserById(@Path("id") userId: String): UserDto
 }

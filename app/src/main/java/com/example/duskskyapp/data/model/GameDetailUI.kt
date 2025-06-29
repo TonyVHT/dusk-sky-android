@@ -5,11 +5,11 @@ package com.example.duskskyapp.data.model
  */
 data class GameDetailUI(
     val id: String,
-    val title: String,
-    val description: String,
-    val developer: String,
-    val publisher: String,
-    val releaseDate: String,
-    val headerImageUrl: String,
-    val screenshots: List<String>
+    val title: String?,
+    val description: String?,
+    val developer: String?,
+    val publisher: String?,
+    val releaseDate: String?,
+    val headerUrl: String,
+    val screenshots: List<String> = emptyList()
 )

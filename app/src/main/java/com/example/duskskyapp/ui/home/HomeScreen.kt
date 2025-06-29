@@ -1,10 +1,9 @@
-// app/src/main/java/com/example/duskskyapp/ui/home/HomeScreen.kt
 package com.example.duskskyapp.ui.home
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
@@ -15,8 +14,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.example.duskskyapp.data.model.GameUI
+import com.example.duskskyapp.ui.profile.GameProfileScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,12 +25,15 @@ fun HomeScreen(
     popularGames: List<GameUI>,
     onGameClick: (String) -> Unit,
     onLogout: () -> Unit,
+    onNavigateToLists: (String) -> Unit,
     onOpenDrawer: () -> Unit,
     onSearch: () -> Unit,
-    onFabClick: () -> Unit
+    onFabClick: () -> Unit,
+    viewModel: HomeViewModel = hiltViewModel()  // <--- importante
 ) {
-    val tabs = listOf("Juegos", "Reseñas", "Listas", "Journal")
+    val tabs = listOf("Juegos", "Perfil", "Listas", "Journal")
     var selectedTab by remember { mutableStateOf(0) }
+    val userId by viewModel.userId.collectAsState()
 
     Scaffold(
         topBar = {
@@ -65,11 +69,46 @@ fun HomeScreen(
         }
     ) { innerPadding ->
         when (selectedTab) {
-            0 -> PopularRow(
-                games    = popularGames,
-                onGameClick = onGameClick,      // ← lo pasamos aquí
-                modifier = Modifier.padding(innerPadding)
+            0 -> PopularGrid(
+                games       = popularGames,
+                onGameClick = onGameClick,
+                modifier    = Modifier.padding(innerPadding)
             )
+            1 -> {
+                if (userId != null) {
+                    GameProfileScreen(
+                        userId      = userId!!,
+                        onGameClick = onGameClick
+                    )
+                } else {
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("No se pudo cargar el perfil.")
+                    }
+                }
+            }
+            2 -> {
+                if (userId != null) {
+                    // Navega automáticamente o muestra un botón:
+                    LaunchedEffect(Unit) {
+                        onNavigateToLists(userId!!)
+                    }
+                } else {
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("No se pudo cargar tu usuario.")
+                    }
+                }
+            }
+
             else -> Box(
                 Modifier
                     .fillMaxSize()
@@ -82,8 +121,9 @@ fun HomeScreen(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun PopularRow(
+private fun PopularGrid(
     games: List<GameUI>,
     onGameClick: (String) -> Unit,
     modifier: Modifier = Modifier
@@ -95,14 +135,19 @@ private fun PopularRow(
             modifier = Modifier
                 .padding(start = 16.dp, bottom = 8.dp)
         )
-        LazyRow(
-            contentPadding       = PaddingValues(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        LazyVerticalGrid(
+            columns             = GridCells.Fixed(2),
+            contentPadding      = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement   = Arrangement.spacedBy(12.dp)
         ) {
             items(games) { game ->
                 GameCard(
-                    game    = game,
-                    onClick = onGameClick   // ← aquí
+                    game     = game,
+                    onClick  = onGameClick,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(0.7f)
                 )
             }
         }
@@ -112,13 +157,12 @@ private fun PopularRow(
 @Composable
 private fun GameCard(
     game: GameUI,
-    onClick: (String) -> Unit      // ← recibe el callback
+    onClick: (String) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = Modifier
-            .width(120.dp)
-            .wrapContentHeight()
-            .clickable { onClick(game.id) }  // ← lo dispara
+        modifier = modifier
+            .clickable { onClick(game.id) }
     ) {
         AsyncImage(
             model           = game.coverUrl,
@@ -132,7 +176,8 @@ private fun GameCard(
         Text(
             text     = game.title,
             style    = MaterialTheme.typography.bodySmall,
-            maxLines = 1
+            maxLines = 1,
+            modifier = Modifier.padding(horizontal = 4.dp)
         )
     }
 }

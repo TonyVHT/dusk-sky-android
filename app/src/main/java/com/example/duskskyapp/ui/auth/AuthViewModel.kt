@@ -1,8 +1,8 @@
-// app/src/main/java/com/example/duskskyapp/ui/auth/AuthViewModel.kt
 package com.example.duskskyapp.ui.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.duskskyapp.data.local.UserPreferences
 import com.example.duskskyapp.data.remote.dto.LoginRequestDto
 import com.example.duskskyapp.data.remote.dto.RegisterRequestDto
 import com.example.duskskyapp.data.repository.AuthRepository
@@ -10,11 +10,14 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import org.json.JSONObject
 import javax.inject.Inject
+import android.util.Base64
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
-    private val repository: AuthRepository
+    private val repository: AuthRepository,
+    private val prefs: UserPreferences // ← inyectamos las preferencias
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AuthUiState())
@@ -32,13 +35,10 @@ class AuthViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(password = newPassword)
     }
 
-    /** Llama al endpoint POST /login/ */
     fun login() = viewModelScope.launch {
         val current = _uiState.value
-        // indicamos carga
         _uiState.value = current.copy(isLoading = true, errorMessage = null)
 
-        // ahora usamos username en lugar de email
         val result = repository.login(
             LoginRequestDto(
                 username = current.username,
@@ -48,23 +48,28 @@ class AuthViewModel @Inject constructor(
 
         result.fold(
             onSuccess = { resp ->
-                // aquí resp.accessToken viene del JSON {"access_token": "...", "token_type":"bearer"}
+                val token = resp.accessToken
+                val userId = decodeJwtAndGetUserId(token)
+
+                // ✅ Guardar en preferencias
+                prefs.saveAuthInfo(token, userId)
+
                 _uiState.value = _uiState.value.copy(
-                    isLoading  = false,
-                    token      = resp.accessToken,
+                    isLoading = false,
+                    token = token,
                     isLoggedIn = true
                 )
             },
             onFailure = { err ->
                 _uiState.value = _uiState.value.copy(
-                    isLoading    = false,
+                    isLoading = false,
                     errorMessage = err.message
                 )
             }
         )
     }
 
-    /** Llama al endpoint POST /register/ */
+
     fun register() = viewModelScope.launch {
         val current = _uiState.value
         _uiState.value = current.copy(isLoading = true, errorMessage = null)
@@ -72,26 +77,37 @@ class AuthViewModel @Inject constructor(
         val result = repository.register(
             RegisterRequestDto(
                 username = current.username,
-                email    = current.email,
+                email = current.email,
                 password = current.password
             )
         )
 
         result.fold(
             onSuccess = { resp ->
-                // aquí no recibes token, así que usamos el userId como placeholder
                 _uiState.value = _uiState.value.copy(
-                    isLoading   = false,
-                    token       = resp.userId.toString(),
-                    isLoggedIn  = true
+                    isLoading = false,
+                    token = resp.userId.toString(),
+                    isLoggedIn = true
                 )
             },
             onFailure = { err ->
                 _uiState.value = _uiState.value.copy(
-                    isLoading    = false,
+                    isLoading = false,
                     errorMessage = err.message
                 )
             }
         )
+    }
+
+    private fun decodeJwtAndGetUserId(token: String): String? {
+        return try {
+            val parts = token.split(".")
+            if (parts.size != 3) return null
+            val payloadJson = String(Base64.decode(parts[1], Base64.DEFAULT))
+            val payload = JSONObject(payloadJson)
+            payload.optString("sub", null) ?: payload.optString("_id", null)
+        } catch (e: Exception) {
+            null
+        }
     }
 }
