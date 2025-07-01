@@ -10,9 +10,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.duskskyapp.ui.auth.LoginScreen
 import com.example.duskskyapp.ui.auth.RegisterScreen
-import com.example.duskskyapp.ui.home.GameDetailScreen
+import com.example.duskskyapp.ui.createGameList.CreateGameListScreen
+import com.example.duskskyapp.ui.detail.GameDetailScreen
 import com.example.duskskyapp.ui.home.HomeScreen
 import com.example.duskskyapp.ui.home.HomeViewModel
+import com.example.duskskyapp.ui.lists.GameListDetailScreen
+import com.example.duskskyapp.ui.lists.GameListsScreen
+import com.example.duskskyapp.ui.profile.GameProfileScreen
 import com.example.duskskyapp.ui.welcome.WelcomeScreen
 
 @Composable
@@ -21,15 +25,13 @@ fun AppNavHost(
 ) {
     NavHost(navController = navController, startDestination = "welcome") {
 
-        // Ruta de Bienvenida
         composable("welcome") {
             WelcomeScreen(
                 onRegisterClick = { navController.navigate("register") },
-                onLoginClick    = { navController.navigate("login") }
+                onLoginClick = { navController.navigate("login") }
             )
         }
 
-        // Ruta de Login
         composable("login") {
             LoginScreen(
                 onLoginSuccess = {
@@ -37,9 +39,7 @@ fun AppNavHost(
                         popUpTo("login") { inclusive = true }
                     }
                 },
-                onNavigateToRegister = {
-                    navController.navigate("register")
-                },
+                onNavigateToRegister = { navController.navigate("register") },
                 onBack = {
                     navController.navigate("welcome") {
                         popUpTo("login") { inclusive = true }
@@ -48,24 +48,19 @@ fun AppNavHost(
             )
         }
 
-
-        // Ruta de Registro
         composable("register") {
             RegisterScreen(
                 onRegisterSuccess = {
-                    // cuando termines de registrarte, vas a Home
                     navController.navigate("welcome") {
                         popUpTo("register") { inclusive = true }
                     }
                 },
                 onNavigateToLogin = {
-                    // “¿Ya tienes cuenta?” → Login
                     navController.navigate("login") {
                         popUpTo("register") { inclusive = true }
                     }
                 },
                 onBack = {
-                    // flecha de volver → Home
                     navController.navigate("welcome") {
                         popUpTo("register") { inclusive = true }
                     }
@@ -75,37 +70,88 @@ fun AppNavHost(
 
         composable("home") {
             val homeViewModel: HomeViewModel = hiltViewModel()
-            val popularGames by homeViewModel.popularGames.collectAsState(emptyList())
+            val popularGames by homeViewModel.popularGames.collectAsState()
 
             HomeScreen(
                 popularGames = popularGames,
-                onGameClick  = { gameId ->
+                onGameClick = { gameId ->
                     navController.navigate("game/$gameId")
                 },
-                onLogout     = {
+                onLogout = {
                     navController.navigate("login") {
                         popUpTo("home") { inclusive = true }
                     }
                 },
-                onOpenDrawer = {
-                    // TODO: abrir tu drawer
+                onNavigateToLists = { userId ->
+                    navController.navigate("lists/$userId")
                 },
-                onSearch     = {
-                    // TODO: navegar a búsqueda
-                },
-                onFabClick   = {
-                    // TODO: flujo “agregar juego”
-                }
+                onOpenDrawer = { /* TODO */ },
+                onSearch = { /* TODO */ },
+                onFabClick = { /* TODO */ }
             )
         }
 
-        // Nueva ruta para detalle de juego
         composable("game/{gameId}") { backStackEntry ->
-            val gameId = backStackEntry.arguments!!.getString("gameId")!!
+            val gameId = backStackEntry.arguments?.getString("gameId") ?: return@composable
             GameDetailScreen(
                 gameId = gameId,
                 onBack = { navController.popBackStack() }
             )
         }
+
+        composable("gameProfile/{userId}") { backStackEntry ->
+            val userId = backStackEntry.arguments?.getString("userId") ?: return@composable
+            GameProfileScreen(
+                userId = userId,
+                onGameClick = { gameId ->
+                    navController.navigate("game/$gameId")
+                }
+            )
+        }
+
+        composable("lists/{userId}") { backStackEntry ->
+            val userId = backStackEntry.arguments?.getString("userId") ?: return@composable
+            GameListsScreen(
+                userId = userId,
+                onGameClick = { gameId ->
+                    navController.navigate("game/$gameId")
+                },
+                onListClick = { listId ->
+                    navController.navigate("lists/detail/$listId")
+                },
+                onBack = { navController.popBackStack() },
+                onCreateListClick = {
+                    navController.navigate("lists/create")
+                }
+            )
+        }
+
+        composable("lists/detail/{listId}") { backStackEntry ->
+            val listId = backStackEntry.arguments?.getString("listId") ?: return@composable
+            GameListDetailScreen(
+                listId = listId,
+                onGameClick = { gameId ->
+                    navController.navigate("game/$gameId")
+                },
+                onBack = {
+                    navController.popBackStack()
+                },
+                onListDeleted = {
+                    navController.popBackStack() // vuelve a la lista si se elimina
+                }
+            )
+        }
+
+
+        composable("lists/create") {
+            CreateGameListScreen(
+                onListCreated = { listId ->
+                    navController.navigate("lists/detail/$listId") {
+                        popUpTo("lists/create") { inclusive = true }
+                    }
+                }
+            )
+        }
+
     }
 }

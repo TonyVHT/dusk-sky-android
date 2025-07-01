@@ -61,6 +61,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.coil.compose)
 
+    implementation(libs.androidx.datastore.preferences)
 
     // Hilt
     implementation(libs.hilt.android)
@@ -80,4 +81,7 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
+
+    implementation(libs.coil.compose.v240)
+
 }
