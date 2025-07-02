@@ -14,25 +14,28 @@ class RealCommentRepository @Inject constructor(
     private val userRepository: UserRepository
 ) : CommentRepository {
 
-    override suspend fun fetchComments(reviewId: String): List<CommentUI> =
-        withContext(Dispatchers.IO) {
+    // Para perfiles, profileId == reviewId
+    override suspend fun fetchComments(reviewId: String): List<CommentUI> = withContext(Dispatchers.IO) {
+        try {
             val dtos = api.getCommentsByReview(reviewId)
-            dtos.map { dto -> dtoToUi(dto) } // correcto, ahora que dtoToUi es suspend
+            dtos.map { dto -> dtoToUi(dto) }
+        } catch (e: Exception) {
+            emptyList() // O lanza error si prefieres
         }
+    }
 
     override suspend fun postComment(
-        reviewId: String,
+        reviewId: String, // Puede ser reviewId o profileId
         authorId: String,
         text: String
     ): CommentUI = withContext(Dispatchers.IO) {
-        // construye el DTO (id y date pueden ser null al postear)
         val dto = CommentDto(
-            id       = null,
+            id = null,
             reviewId = reviewId,
             authorId = authorId,
-            text     = text,
-            date     = null,
-            status   = "visible"
+            text = text,
+            date = null,
+            status = "visible"
         )
         val created = api.postComment(dto)
         dtoToUi(created)
@@ -56,7 +59,4 @@ class RealCommentRepository @Inject constructor(
             timestamp = dto.date.orEmpty()
         )
     }
-
-
-
 }

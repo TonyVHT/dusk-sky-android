@@ -13,27 +13,22 @@ import kotlinx.coroutines.launch
 import org.json.JSONObject
 import javax.inject.Inject
 import android.util.Base64
-
+import android.util.Log
+import com.example.duskskyapp.data.remote.UserManagerApi
+import com.example.duskskyapp.data.remote.dto.UserProfileCreateDto
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val repository: AuthRepository,
-    private val prefs: UserPreferences // ← inyectamos las preferencias
+    private val prefs: UserPreferences,
+    private val userManagerApi: UserManagerApi
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AuthUiState())
     val uiState: StateFlow<AuthUiState> = _uiState
 
-    fun onEmailChanged(newEmail: String) {
-        _uiState.value = _uiState.value.copy(email = newEmail)
-    }
-
-    fun onUsernameChanged(newUsername: String) {
-        _uiState.value = _uiState.value.copy(username = newUsername)
-    }
-
-    fun onPasswordChanged(newPassword: String) {
-        _uiState.value = _uiState.value.copy(password = newPassword)
-    }
+    fun onEmailChanged(newEmail: String) { _uiState.value = _uiState.value.copy(email = newEmail) }
+    fun onUsernameChanged(newUsername: String) { _uiState.value = _uiState.value.copy(username = newUsername) }
+    fun onPasswordChanged(newPassword: String) { _uiState.value = _uiState.value.copy(password = newPassword) }
 
     fun login() = viewModelScope.launch {
         val current = _uiState.value
@@ -50,10 +45,7 @@ class AuthViewModel @Inject constructor(
             onSuccess = { resp ->
                 val token = resp.accessToken
                 val userId = decodeJwtAndGetUserId(token)
-
-                // ✅ Guardar en preferencias
                 prefs.saveAuthInfo(token, userId)
-
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     token = token,
@@ -69,10 +61,10 @@ class AuthViewModel @Inject constructor(
         )
     }
 
-
     fun register() = viewModelScope.launch {
         val current = _uiState.value
         _uiState.value = current.copy(isLoading = true, errorMessage = null)
+        Log.d("AuthViewModel", "🔄 Intentando registrar usuario: username=${current.username}, email=${current.email}")
 
         val result = repository.register(
             RegisterRequestDto(
@@ -84,13 +76,51 @@ class AuthViewModel @Inject constructor(
 
         result.fold(
             onSuccess = { resp ->
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    token = resp.userId.toString(),
-                    isLoggedIn = true
-                )
+                val userId = resp.userId.toString()
+                Log.d("AuthViewModel", "✅ Usuario registrado. userId recibido: $userId, respuesta completa: $resp")
+
+                // ⚠️ Solo crea el perfil si userId es válido
+                if (userId == "0" || userId.isBlank()) {
+                    Log.e("AuthViewModel", "❌ userId inválido: $userId. No se puede crear perfil.")
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        errorMessage = "Error: El servidor devolvió un ID de usuario inválido."
+                    )
+                    return@fold
+                }
+
+                // ---- Crea el perfil ----
+                try {
+                    val profileReq = UserProfileCreateDto(user_id = userId)
+                    Log.d("AuthViewModel", "➡️ Enviando creación de perfil: $profileReq")
+                    val profileResp = userManagerApi.createUserProfile(userId, profileReq)
+                    Log.d("AuthViewModel", "✅ Perfil creado exitosamente: $profileResp")
+
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        token = userId,
+                        isLoggedIn = true
+                    )
+                } catch (e: Exception) {
+                    // Maneja el caso de conflicto (409) como éxito
+                    if (e.message?.contains("409") == true) {
+                        Log.w("AuthViewModel", "⚠️ Perfil ya existe, continuando con registro.")
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            token = userId,
+                            isLoggedIn = true
+                        )
+                    } else {
+                        Log.e("AuthViewModel", "❌ Error al crear perfil: ${e.message}")
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            errorMessage = "Error al crear perfil: ${e.message}"
+                        )
+                    }
+                }
             },
             onFailure = { err ->
+                Log.e("AuthViewModel", "❌ Error al registrar usuario: ${err.message}")
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     errorMessage = err.message
@@ -98,6 +128,7 @@ class AuthViewModel @Inject constructor(
             }
         )
     }
+
 
     private fun decodeJwtAndGetUserId(token: String): String? {
         return try {

@@ -15,8 +15,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
+import com.example.duskskyapp.data.local.UserPreferences
 import com.example.duskskyapp.data.model.GameUI
+import com.example.duskskyapp.ui.friends.FriendsScreen
 import com.example.duskskyapp.ui.profile.GameProfileScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -27,13 +30,18 @@ fun HomeScreen(
     onLogout: () -> Unit,
     onNavigateToLists: (String) -> Unit,
     onOpenDrawer: () -> Unit,
-    onSearch: () -> Unit,
-    onFabClick: () -> Unit,
-    viewModel: HomeViewModel = hiltViewModel()  // <--- importante
+    userPrefs: UserPreferences,
+    navController: NavHostController,
+    viewModel: HomeViewModel = hiltViewModel()
 ) {
-    val tabs = listOf("Juegos", "Perfil", "Listas", "Journal")
+    val tabs = listOf("Juegos", "Perfil", "Listas", "Amigos")
     var selectedTab by remember { mutableStateOf(0) }
     val userId by viewModel.userId.collectAsState()
+
+    // Búsqueda de juegos
+    val searchQuery by viewModel.searchQuery.collectAsState()
+    val searchResults by viewModel.searchResults.collectAsState()
+    val isSearching = searchQuery.isNotBlank()
 
     Scaffold(
         topBar = {
@@ -43,11 +51,6 @@ fun HomeScreen(
                     navigationIcon = {
                         IconButton(onClick = onOpenDrawer) {
                             Icon(Icons.Filled.Menu, contentDescription = "Menú")
-                        }
-                    },
-                    actions = {
-                        IconButton(onClick = onSearch) {
-                            Icon(Icons.Filled.Search, contentDescription = "Buscar")
                         }
                     }
                 )
@@ -61,19 +64,32 @@ fun HomeScreen(
                     }
                 }
             }
-        },
-        floatingActionButton = {
-            FloatingActionButton(onClick = onFabClick) {
-                Icon(Icons.Filled.Add, contentDescription = "Agregar")
-            }
         }
+        // Sin floatingActionButton
     ) { innerPadding ->
         when (selectedTab) {
-            0 -> PopularGrid(
-                games       = popularGames,
-                onGameClick = onGameClick,
-                modifier    = Modifier.padding(innerPadding)
-            )
+            0 -> {
+                // ==== Tab de Juegos con buscador funcional ====
+                Column(modifier = Modifier.padding(innerPadding)) {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { viewModel.searchGames(it) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        placeholder = { Text("Buscar juego...") },
+                        singleLine = true,
+                        leadingIcon = { Icon(Icons.Default.Search, null) }
+                    )
+
+                    PopularGrid(
+                        games = if (isSearching) searchResults else popularGames,
+                        onGameClick = onGameClick,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+
             1 -> {
                 if (userId != null) {
                     GameProfileScreen(
@@ -91,9 +107,9 @@ fun HomeScreen(
                     }
                 }
             }
+
             2 -> {
                 if (userId != null) {
-                    // Navega automáticamente o muestra un botón:
                     LaunchedEffect(Unit) {
                         onNavigateToLists(userId!!)
                     }
@@ -109,6 +125,25 @@ fun HomeScreen(
                 }
             }
 
+            3 -> {
+                if (userId != null) {
+                    FriendsScreen(
+                        onFriendClick = { friendUserId ->
+                            navController.navigate("gameProfile/$friendUserId")
+                        }
+                    )
+                } else {
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("No se pudo cargar el usuario.")
+                    }
+                }
+            }
+
             else -> Box(
                 Modifier
                     .fillMaxSize()
@@ -120,6 +155,7 @@ fun HomeScreen(
         }
     }
 }
+
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable

@@ -23,4 +23,10 @@ interface CommentApi {
 
     @DELETE("comments/{id}")
     suspend fun deleteComment(@Path("id") id: String)
+
+    @GET("comments/user/{userId}")
+    suspend fun getCommentsByUser(
+        @Path("userId") userId: String
+    ): List<CommentDto>
+
 }

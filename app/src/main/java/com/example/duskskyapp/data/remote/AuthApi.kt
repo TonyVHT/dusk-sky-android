@@ -9,6 +9,7 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface AuthApi {
     @POST("auth/register/")
@@ -19,4 +20,8 @@ interface AuthApi {
 
     @GET("auth/users/{id}")
     suspend fun getUserById(@Path("id") userId: String): UserDto
+
+    @GET("auth/users/search")
+    suspend fun searchUserByUsername(@Query("username") username: String): List<UserDto>
+
 }

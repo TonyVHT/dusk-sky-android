@@ -25,7 +25,15 @@ fun RegisterScreen(
     onNavigateToLogin: () -> Unit,
     onBack: () -> Unit              // ← callback para “volver”
 ) {
+
+
     val state by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(state.isLoggedIn) {
+        if (state.isLoggedIn) {
+            onRegisterSuccess()
+        }
+    }
 
     // Local state para confirmar contraseña
     var confirmPassword by remember { mutableStateOf("") }
@@ -33,11 +41,6 @@ fun RegisterScreen(
 
     var acceptTerms by remember { mutableStateOf(false) }
     var acceptPrivacy by remember { mutableStateOf(false) }
-
-    // Cuando el registro es exitoso, navegamos
-    if (state.isLoggedIn) {
-        LaunchedEffect(Unit) { onRegisterSuccess() }
-    }
 
     Scaffold(
         topBar = {

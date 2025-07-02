@@ -1,23 +1,28 @@
 package com.example.duskskyapp.ui.navigation
 
+import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.duskskyapp.di.AppEntryPoint
 import com.example.duskskyapp.ui.auth.LoginScreen
 import com.example.duskskyapp.ui.auth.RegisterScreen
 import com.example.duskskyapp.ui.createGameList.CreateGameListScreen
 import com.example.duskskyapp.ui.detail.GameDetailScreen
+import com.example.duskskyapp.ui.friends.FriendsScreen
 import com.example.duskskyapp.ui.home.HomeScreen
 import com.example.duskskyapp.ui.home.HomeViewModel
 import com.example.duskskyapp.ui.lists.GameListDetailScreen
 import com.example.duskskyapp.ui.lists.GameListsScreen
 import com.example.duskskyapp.ui.profile.GameProfileScreen
 import com.example.duskskyapp.ui.welcome.WelcomeScreen
+import dagger.hilt.android.EntryPointAccessors
 
 @Composable
 fun AppNavHost(
@@ -72,6 +77,14 @@ fun AppNavHost(
             val homeViewModel: HomeViewModel = hiltViewModel()
             val popularGames by homeViewModel.popularGames.collectAsState()
 
+            val context = LocalContext.current.applicationContext
+            val entryPoint = EntryPointAccessors.fromApplication(
+                context,
+                AppEntryPoint::class.java
+            )
+            val userPrefs = entryPoint.userPreferences()
+
+            // 👇 ¡AQUÍ! Pasa navController
             HomeScreen(
                 popularGames = popularGames,
                 onGameClick = { gameId ->
@@ -86,10 +99,12 @@ fun AppNavHost(
                     navController.navigate("lists/$userId")
                 },
                 onOpenDrawer = { /* TODO */ },
-                onSearch = { /* TODO */ },
-                onFabClick = { /* TODO */ }
+
+                userPrefs = userPrefs,
+                navController = navController // 👈 <<--- ¡Fíjate en esto!
             )
         }
+
 
         composable("game/{gameId}") { backStackEntry ->
             val gameId = backStackEntry.arguments?.getString("gameId") ?: return@composable
@@ -137,11 +152,10 @@ fun AppNavHost(
                     navController.popBackStack()
                 },
                 onListDeleted = {
-                    navController.popBackStack() // vuelve a la lista si se elimina
+                    navController.popBackStack()
                 }
             )
         }
-
 
         composable("lists/create") {
             CreateGameListScreen(
@@ -149,6 +163,9 @@ fun AppNavHost(
                     navController.navigate("lists/detail/$listId") {
                         popUpTo("lists/create") { inclusive = true }
                     }
+                },
+                onBack = {
+                    navController.popBackStack()
                 }
             )
         }
