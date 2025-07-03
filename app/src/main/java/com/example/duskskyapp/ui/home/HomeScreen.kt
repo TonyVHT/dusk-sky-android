@@ -67,12 +67,7 @@ fun HomeScreen(
         topBar = {
             Column {
                 TopAppBar(
-                    title = { Text("Popular") },
-                    navigationIcon = {
-                        IconButton(onClick = onOpenDrawer) {
-                            Icon(Icons.Filled.Menu, contentDescription = "Menú")
-                        }
-                    }
+                    title = { Text("DuskSky") }
                 )
                 TabRow(selectedTabIndex = selectedTab) {
                     tabs.forEachIndexed { i, t ->
@@ -182,25 +177,23 @@ fun HomeScreen(
 
         if (showAddDialog) {
             AddGameDialog(
-                context = context,
+                context = context, // 👈 se lo pasamos
                 onDismiss = { showAddDialog = false },
                 onImportClick = { url ->
-                    viewModel.importGameFromSteamUrl(url) { success, message ->
-                        if (success) {
-                            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-                            isImportError = false
-                            showAddDialog = false
-                        } else {
-                            isImportError = true
-                            importErrorMessage = message
-                        }
+                    if (url.contains("123456")) {
+                        isImportError = true
+                        importErrorMessage = "El juego ya fue importado previamente."
+                    } else {
+                        Toast.makeText(context, "Juego importado exitosamente", Toast.LENGTH_SHORT).show()
+                        isImportError = false
+                        showAddDialog = false
+                        // TODO: Llamar ViewModel o lógica real aquí
                     }
                 },
                 isError = isImportError,
                 errorMessage = importErrorMessage
             )
         }
-
     }
 }
 
