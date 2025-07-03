@@ -61,8 +61,8 @@ class GameProfileViewModel @Inject constructor(
         try {
             val profile = userManagerApi.getUserProfile(userId)
             val fixedProfile = profile.copy(
-                avatarUrl = profile.avatarUrl.replace("localhost", "192.168.1.113"),
-                bannerUrl = profile.bannerUrl.replace("localhost", "192.168.1.113")
+                avatarUrl = profile.avatarUrl.replace("localhost", "10.0.2.2"),
+                bannerUrl = profile.bannerUrl.replace("localhost", "10.0.2.2")
             )
             _profile.value = fixedProfile
 

@@ -20,32 +20,32 @@ object NetworkModule {
 
     // === Base URLs ===
     @Provides @Singleton @Named("AUTH_BASE_URL")
-    fun provideAuthBaseUrl(): String = "http://192.168.1.113:8001/"
+    fun provideAuthBaseUrl(): String = "http://10.0.2.2:8001/"
 
     @Provides @Singleton @Named("GAME_BASE_URL")
-    fun provideGameBaseUrl(): String = "http://192.168.1.113:8004/"
+    fun provideGameBaseUrl(): String = "http://10.0.2.2:8004/"
 
     @Provides @Singleton @Named("COMMENT_BASE_URL")
-    fun provideCommentBaseUrl(): String = "http://192.168.1.113:8008/"
+    fun provideCommentBaseUrl(): String = "http://10.0.2.2:8008/"
 
     @Provides @Singleton @Named("REVIEW_BASE_URL")
-    fun provideReviewBaseUrl(): String = "http://192.168.1.113:8007/"
+    fun provideReviewBaseUrl(): String = "http://10.0.2.2:8007/"
 
     @Provides @Singleton @Named("TRACKING_BASE_URL")
-    fun provideTrackingBaseUrl(): String = "http://192.168.1.113:8005/"
+    fun provideTrackingBaseUrl(): String = "http://10.0.2.2:8005/"
 
     @Provides @Singleton @Named("USERMANAGER_BASE_URL")
-    fun provideUserManagerBaseUrl(): String = "http://192.168.1.113:8003/"
+    fun provideUserManagerBaseUrl(): String = "http://10.0.2.2:8003/"
     @Provides
     @Singleton
     @Named("FRIENDSHIP_BASE_URL")
-    fun provideFriendshipBaseUrl(): String = "http://192.168.1.113:8006/"
+    fun provideFriendshipBaseUrl(): String = "http://10.0.2.2:8006/"
 
 
     @Provides
     @Singleton
     @Named("GAMELIST_BASE_URL")
-    fun provideGameListBaseUrl(): String = "http://192.168.1.113:8010/"
+    fun provideGameListBaseUrl(): String = "http://10.0.2.2:8010/"
 
 
 
