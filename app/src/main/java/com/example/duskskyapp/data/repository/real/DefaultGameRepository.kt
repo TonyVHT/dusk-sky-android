@@ -2,6 +2,7 @@ package com.example.duskskyapp.data.repository.real
 
 import com.example.duskskyapp.data.model.GameUI
 import com.example.duskskyapp.data.model.GameDetailUI
+import com.example.duskskyapp.data.model.ImportGameResponse
 import com.example.duskskyapp.data.remote.GameApi
 import com.example.duskskyapp.data.remote.dto.GameDto
 import com.example.duskskyapp.data.repository.GameRepository
@@ -52,6 +53,9 @@ class DefaultGameRepository @Inject constructor(
         val result = api.getGameById(id)
         println("✅ Juego recibido: ${result.title}")
         result
+    }
+    override suspend fun importGame(steamAppId: Int): ImportGameResponse = withContext(Dispatchers.IO) {
+        api.postImportGame(steamAppId)
     }
 
 }

@@ -50,7 +50,6 @@ class GameProfileViewModel @Inject constructor(
             _authorId.value = userPrefs.getUserId()
         }
     }
-
     fun loadUserGames(userId: String) = viewModelScope.launch {
         val data = trackingRepo.getUserTrackings(userId)
         Log.d("GameProfileViewModel", "Se cargaron ${data.size} trackings")

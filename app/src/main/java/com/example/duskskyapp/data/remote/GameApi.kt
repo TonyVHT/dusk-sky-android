@@ -1,9 +1,11 @@
 package com.example.duskskyapp.data.remote
 
+import com.example.duskskyapp.data.model.ImportGameResponse
 import com.example.duskskyapp.data.remote.dto.GameDetailsDto
 import com.example.duskskyapp.data.remote.dto.GameDto
 import com.example.duskskyapp.data.remote.dto.GamePreviewDto
 import com.example.duskskyapp.data.remote.dto.ImportResponseDto
+import okhttp3.Response
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
@@ -32,11 +34,8 @@ interface GameApi {
     suspend fun searchGameByName(@Query("name") name: String): List<GameDto>
 
 
-    // 🔹 Importación desde Steam
     @POST("api/game/import/{steamAppId}")
-    suspend fun importGameFromSteam(
-        @Path("steamAppId") steamAppId: Int
-    ): ImportResponseDto
+    suspend fun postImportGame(@Path("steamAppId") steamAppId: Int): ImportGameResponse
 
     // 🔹 Obtener preview por ID
     @GET("api/game/preview/{id}")

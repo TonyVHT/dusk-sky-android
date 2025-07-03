@@ -16,6 +16,8 @@ import android.util.Base64
 import android.util.Log
 import com.example.duskskyapp.data.remote.UserManagerApi
 import com.example.duskskyapp.data.remote.dto.UserProfileCreateDto
+import com.example.duskskyapp.utils.JwtUtils
+
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val repository: AuthRepository,
@@ -46,6 +48,12 @@ class AuthViewModel @Inject constructor(
                 val token = resp.accessToken
                 val userId = decodeJwtAndGetUserId(token)
                 prefs.saveAuthInfo(token, userId)
+
+                val role = extractRoleFromJwt(token)
+                prefs.saveUserRole(role)
+
+                prefs.saveUsername(current.username)
+
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     token = token,
@@ -137,6 +145,19 @@ class AuthViewModel @Inject constructor(
             val payloadJson = String(Base64.decode(parts[1], Base64.DEFAULT))
             val payload = JSONObject(payloadJson)
             payload.optString("sub", null) ?: payload.optString("_id", null)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    private fun extractRoleFromJwt(token: String): String? {
+        return try {
+            val parts = token.split(".")
+            if (parts.size != 3) return null
+
+            val payloadJson = String(Base64.decode(parts[1], Base64.DEFAULT))
+            val payload = JSONObject(payloadJson)
+            payload.optString("role", null)
         } catch (e: Exception) {
             null
         }

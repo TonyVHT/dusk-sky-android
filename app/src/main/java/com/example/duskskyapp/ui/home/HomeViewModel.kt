@@ -54,4 +54,30 @@ class HomeViewModel @Inject constructor(
             }
         }
     }
+    // --------- AQUÍ va la función para extraer el App ID ---------
+    private fun extractSteamAppId(url: String): Int? {
+        val regex = Regex("""/app/(\d+)""")
+        return regex.find(url)?.groups?.get(1)?.value?.toIntOrNull()
+    }
+
+    // --------- IMPORTA el juego desde la URL usando el repo ---------
+    fun importGameFromSteamUrl(url: String, onResult: (Boolean, String) -> Unit) {
+        val steamAppId = extractSteamAppId(url)
+        if (steamAppId == null) {
+            onResult(false, "URL inválida. No se pudo extraer el Steam App ID.")
+            return
+        }
+        viewModelScope.launch {
+            try {
+                val result = repo.importGame(steamAppId)
+                // Recargar populares (opcional)
+                _popularGames.value = repo.fetchPopular()
+                onResult(true, result.message)
+            } catch (e: Exception) {
+                val msg = e.message ?: "Error al importar juego"
+                onResult(false, msg)
+            }
+        }
+    }
+
 }

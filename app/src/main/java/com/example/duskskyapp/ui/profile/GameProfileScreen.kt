@@ -92,27 +92,27 @@ fun GameProfileScreen(
                                 )
                             }
 
-                            // Botón de editar avatar
-                            IconButton(
-                                onClick = {
-                                    // TODO: Lógica para subir imagen nueva
-                                },
-                                modifier = Modifier
-                                    .align(Alignment.BottomEnd)
-                                    .size(28.dp)
-                                    .background(
-                                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
-                                        shape = CircleShape
-                                    )
-                                    .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Edit,
-                                    contentDescription = "Editar avatar",
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
+//                            // Botón de editar avatar
+//                            IconButton(
+//                                onClick = {
+//                                    // TODO: Lógica para subir imagen nueva
+//                                },
+//                                modifier = Modifier
+//                                    .align(Alignment.BottomEnd)
+//                                    .size(28.dp)
+//                                    .background(
+//                                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
+//                                        shape = CircleShape
+//                                    )
+//                                    .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+//                            ) {
+//                                Icon(
+//                                    imageVector = Icons.Default.Edit,
+//                                    contentDescription = "Editar avatar",
+//                                    tint = MaterialTheme.colorScheme.primary,
+//                                    modifier = Modifier.size(16.dp)
+//                                )
+//                            }
                         }
 
                         Spacer(modifier = Modifier.width(12.dp))

@@ -36,5 +36,15 @@ class UserPreferencesImpl @Inject constructor(
             prefs.edit().putString("userId", userId).apply()
         }
     }
+    override suspend fun saveUserRole(role: String?) {
+        prefs.edit().putString("user_role", role).apply()
+    }
+    override suspend fun getUsername(): String? =
+        prefs.getString("username", null)
+
+    override suspend fun saveUsername(username: String?) {
+        prefs.edit().putString("username", username).apply()
+    }
+
 }
 

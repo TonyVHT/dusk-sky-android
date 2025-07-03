@@ -17,4 +17,17 @@ object JwtUtils {
             null
         }
     }
+
+    fun extractRoleFromJwt(token: String): String? {
+        return try {
+            val parts = token.split(".")
+            if (parts.size != 3) return null
+
+            val payloadJson = String(Base64.decode(parts[1], Base64.DEFAULT))
+            val payload = JSONObject(payloadJson)
+            payload.optString("role", null)
+        } catch (e: Exception) {
+            null
+        }
+    }
 }
