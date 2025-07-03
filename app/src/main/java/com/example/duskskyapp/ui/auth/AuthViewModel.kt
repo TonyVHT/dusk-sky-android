@@ -34,11 +34,12 @@ class AuthViewModel @Inject constructor(
 
     fun login() = viewModelScope.launch {
         val current = _uiState.value
+        val usernameTrimmed = current.username.trim() // 👈 Quita espacios extra
         _uiState.value = current.copy(isLoading = true, errorMessage = null)
 
         val result = repository.login(
             LoginRequestDto(
-                username = current.username,
+                username = usernameTrimmed, // Usa el username limpio
                 password = current.password
             )
         )
@@ -52,7 +53,7 @@ class AuthViewModel @Inject constructor(
                 val role = extractRoleFromJwt(token)
                 prefs.saveUserRole(role)
 
-                prefs.saveUsername(current.username)
+                prefs.saveUsername(usernameTrimmed) // También guarda limpio
 
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
@@ -63,21 +64,24 @@ class AuthViewModel @Inject constructor(
             onFailure = { err ->
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = err.message
+                    errorMessage = getFriendlyErrorMessage(err)
                 )
             }
         )
     }
 
+
     fun register() = viewModelScope.launch {
         val current = _uiState.value
+        val usernameTrimmed = current.username.trim()
+        val emailTrimmed = current.email.trim()
         _uiState.value = current.copy(isLoading = true, errorMessage = null)
-        Log.d("AuthViewModel", "🔄 Intentando registrar usuario: username=${current.username}, email=${current.email}")
+        Log.d("AuthViewModel", "🔄 Intentando registrar usuario: username=$usernameTrimmed, email=$emailTrimmed")
 
         val result = repository.register(
             RegisterRequestDto(
-                username = current.username,
-                email = current.email,
+                username = usernameTrimmed,
+                email = emailTrimmed,
                 password = current.password
             )
         )
@@ -87,7 +91,6 @@ class AuthViewModel @Inject constructor(
                 val userId = resp.userId.toString()
                 Log.d("AuthViewModel", "✅ Usuario registrado. userId recibido: $userId, respuesta completa: $resp")
 
-                // ⚠️ Solo crea el perfil si userId es válido
                 if (userId == "0" || userId.isBlank()) {
                     Log.e("AuthViewModel", "❌ userId inválido: $userId. No se puede crear perfil.")
                     _uiState.value = _uiState.value.copy(
@@ -97,12 +100,14 @@ class AuthViewModel @Inject constructor(
                     return@fold
                 }
 
-                // ---- Crea el perfil ----
                 try {
                     val profileReq = UserProfileCreateDto(user_id = userId)
                     Log.d("AuthViewModel", "➡️ Enviando creación de perfil: $profileReq")
                     val profileResp = userManagerApi.createUserProfile(userId, profileReq)
                     Log.d("AuthViewModel", "✅ Perfil creado exitosamente: $profileResp")
+
+                    // Guarda el username limpio para futuras sesiones
+                    prefs.saveUsername(usernameTrimmed)
 
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
@@ -110,7 +115,6 @@ class AuthViewModel @Inject constructor(
                         isLoggedIn = true
                     )
                 } catch (e: Exception) {
-                    // Maneja el caso de conflicto (409) como éxito
                     if (e.message?.contains("409") == true) {
                         Log.w("AuthViewModel", "⚠️ Perfil ya existe, continuando con registro.")
                         _uiState.value = _uiState.value.copy(
@@ -122,7 +126,7 @@ class AuthViewModel @Inject constructor(
                         Log.e("AuthViewModel", "❌ Error al crear perfil: ${e.message}")
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
-                            errorMessage = "Error al crear perfil: ${e.message}"
+                            errorMessage = getFriendlyErrorMessage(e)
                         )
                     }
                 }
@@ -131,7 +135,7 @@ class AuthViewModel @Inject constructor(
                 Log.e("AuthViewModel", "❌ Error al registrar usuario: ${err.message}")
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = err.message
+                    errorMessage = getFriendlyErrorMessage(err)
                 )
             }
         )
@@ -162,4 +166,27 @@ class AuthViewModel @Inject constructor(
             null
         }
     }
+
+    private fun getFriendlyErrorMessage(e: Throwable): String {
+        val msg = e.message ?: ""
+        return when {
+            msg.contains("404") || msg.contains("Not Found", ignoreCase = true) ->
+                "El recurso no fue encontrado. Verifica los datos ingresados."
+            msg.contains("409") || msg.contains("Conflict", ignoreCase = true) ->
+                "Este usuario ya existe. Prueba con otro nombre de usuario o correo."
+            msg.contains("400") || msg.contains("Bad Request", ignoreCase = true) ->
+                "Datos inválidos. Por favor revisa la información e inténtalo de nuevo."
+            msg.contains("401") || msg.contains("Unauthorized", ignoreCase = true) ->
+                "Credenciales incorrectas. Intenta de nuevo."
+            msg.contains("timeout", ignoreCase = true) ->
+                "La conexión tardó demasiado. Intenta más tarde."
+            msg.contains("Failed to connect") || msg.contains("Unable to resolve host", ignoreCase = true) ->
+                "No se pudo conectar al servidor. Revisa tu conexión a internet."
+            msg.isBlank() ->
+                "Ha ocurrido un error inesperado. Intenta más tarde."
+            else -> "Error: $msg"
+        }
+    }
+
+
 }

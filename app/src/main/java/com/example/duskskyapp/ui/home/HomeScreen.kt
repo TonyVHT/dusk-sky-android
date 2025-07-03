@@ -43,7 +43,6 @@ fun HomeScreen(
     var selectedTab by remember { mutableStateOf(0) }
     val userId by viewModel.userId.collectAsState()
 
-    // <<<<<< Nuevo: obtener el rol del usuario
     var username by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(Unit) {
         username = userPrefs.getUsername()
@@ -51,7 +50,6 @@ fun HomeScreen(
     }
     val isAdmin = username == "admin"
 
-    // >>>>>>
 
     var showAddDialog by remember { mutableStateOf(false) }
     var isImportError by remember { mutableStateOf(false) }
